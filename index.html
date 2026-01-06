@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <title>BoxNote | 引越し段ボール管理</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Noto Sans JP"', 'sans-serif'] },
+                    colors: {
+                        primary: '#4F46E5', // Indigo 600
+                        primaryLight: '#EEF2FF',
+                        surface: '#F8FAFC',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { background-color: #F8FAFC; -webkit-font-smoothing: antialiased; }
+        .glass-header { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .box-card { transition: transform 0.2s, box-shadow 0.2s; }
+        .box-card:active { transform: scale(0.98); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="text-slate-800 pb-28">
+
+    <header class="glass-header fixed top-0 w-full z-40 transition-all duration-300">
+        <div class="max-w-lg mx-auto px-5 py-4 flex justify-between items-center">
+            <h1 class="text-xl font-black tracking-tight text-slate-900 flex items-center gap-2">
+                <i class="fas fa-cube text-primary"></i> BoxNote
+            </h1>
+            <div id="headerActions" class="hidden">
+                <button onclick="openModal()" class="text-primary font-bold text-sm bg-primaryLight px-3 py-1 rounded-full hover:bg-indigo-100 transition-colors">
+                    <i class="fas fa-plus mr-1"></i>追加
+                </button>
+            </div>
+        </div>
+        
+        <div id="searchContainer" class="max-w-lg mx-auto px-5 pb-3 hidden transition-all">
+            <div class="relative group">
+                <input type="text" id="searchInput" onkeyup="filterBoxes()" 
+                    placeholder="中身や箱の名前を検索..." 
+                    class="w-full bg-slate-100 text-slate-700 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all">
+                <i class="fas fa-search absolute left-3.5 top-3 text-slate-400"></i>
+            </div>
+        </div>
+    </header>
+
+    <div class="h-20"></div>
+
+    <main class="max-w-lg mx-auto px-5">
+        
+        <div id="introSection" class="animate-fade-in pt-6">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-black text-slate-900 mb-4 leading-tight">
+                    引越し荷造りを、<br><span class="text-primary">もっとスマート</span>に。
+                </h2>
+                <p class="text-slate-500 text-sm leading-relaxed mb-8">
+                    「あれ、どの箱に入れたっけ？」をゼロに。<br>
+                    写真とメモで中身を管理するアプリです。
+                </p>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3 mb-10">
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 text-center">
+                    <div class="w-10 h-10 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-2"><i class="fas fa-camera"></i></div>
+                    <p class="text-xs font-bold text-slate-700">写真で<br>記録</p>
+                </div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 text-center">
+                    <div class="w-10 h-10 bg-indigo-50 text-primary rounded-full flex items-center justify-center mx-auto mb-2"><i class="fas fa-search"></i></div>
+                    <p class="text-xs font-bold text-slate-700">中身を<br>検索</p>
+                </div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 text-center">
+                    <div class="w-10 h-10 bg-purple-50 text-purple-500 rounded-full flex items-center justify-center mx-auto mb-2"><i class="fas fa-qrcode"></i></div>
+                    <p class="text-xs font-bold text-slate-700">QRで<br>管理</p>
+                </div>
+            </div>
+            <button onclick="loginAndStart()" class="w-full py-4 bg-primary text-white rounded-2xl font-bold text-lg shadow-xl shadow-indigo-200 hover:bg-indigo-700 transition-all transform hover:-translate-y-1">
+                はじめる
+            </button>
+        </div>
+
+        <div id="listBoxSection" class="hidden space-y-4 pt-2"></div>
+    </main>
+
+    <button id="fab" onclick="openModal()" class="hidden fixed bottom-6 right-6 w-14 h-14 bg-primary text-white rounded-full flex items-center justify-center text-xl shadow-lg shadow-indigo-300 hover:bg-indigo-700 transition-all z-30">
+        <i class="fas fa-plus"></i>
+    </button>
+
+    <div id="modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden z-50 flex items-end sm:items-center justify-center transition-opacity duration-300">
+        <div class="bg-white w-full max-w-lg sm:rounded-3xl rounded-t-3xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10">
+                <h2 class="text-base font-bold text-slate-800">荷物を登録</h2>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 bg-slate-50 p-2 rounded-full w-8 h-8 flex items-center justify-center"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto no-scrollbar">
+                
+                <div class="flex items-start gap-4 mb-6">
+                    <div class="flex-shrink-0 w-16 h-16 rounded-2xl bg-primaryLight text-primary flex flex-col items-center justify-center border border-primary/10">
+                        <span class="text-[10px] font-bold uppercase opacity-70">BOX</span>
+                        <span id="boxNumber" class="text-2xl font-bold leading-none">-</span>
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">箱の名前（任意）</label>
+                        <input type="text" id="boxName" maxlength="40" placeholder="例: キッチン、冬服" 
+                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-base font-bold text-slate-800 focus:ring-2 focus:ring-primary/20 outline-none placeholder:font-normal">
+                        <p class="text-[10px] text-slate-400 mt-1">最大40文字</p>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">中身の写真（最大2枚）</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="relative group rounded-2xl overflow-hidden border-2 border-dashed border-slate-200 bg-slate-50 cursor-pointer h-32 flex items-center justify-center" onclick="document.getElementById('fileInput1').click()">
+                            <img id="preview1" class="w-full h-full object-cover hidden">
+                            <div id="placeholder1" class="text-center text-slate-400"><i class="fas fa-camera mb-1"></i><br><span class="text-[10px]">写真1</span></div>
+                        </div>
+                        <div class="relative group rounded-2xl overflow-hidden border-2 border-dashed border-slate-200 bg-slate-50 cursor-pointer h-32 flex items-center justify-center" onclick="document.getElementById('fileInput2').click()">
+                            <img id="preview2" class="w-full h-full object-cover hidden">
+                            <div id="placeholder2" class="text-center text-slate-400"><i class="fas fa-camera mb-1"></i><br><span class="text-[10px]">写真2</span></div>
+                        </div>
+                    </div>
+                    <input type="file" id="fileInput1" accept="image/*" class="hidden" onchange="handleFileSelect(this, 1)">
+                    <input type="file" id="fileInput2" accept="image/*" class="hidden" onchange="handleFileSelect(this, 2)">
+                </div>
+
+                <div class="mb-2">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">メモ・キーワード</label>
+                    <div class="relative">
+                        <textarea id="boxMemo" maxlength="400" rows="3" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none" placeholder="詳細な中身（例: 漫画全巻、延長コード...）"></textarea>
+                        <button onclick="startVoiceRecognition()" class="absolute right-2 bottom-2 text-slate-400 hover:text-primary p-2"><i class="fas fa-microphone"></i></button>
+                    </div>
+                    <p id="voiceStatus" class="text-xs text-primary mt-1 h-4 font-bold"></p>
+                </div>
+            </div>
+            <div class="p-4 border-t border-slate-100 bg-white">
+                <button onclick="saveBox()" id="saveBtn" class="w-full py-3.5 bg-primary text-white rounded-xl font-bold shadow-lg hover:bg-indigo-700 transition-all">登録する</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="viewModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden relative max-h-[90vh] overflow-y-auto no-scrollbar">
+            <div class="relative h-64 bg-slate-200 shrink-0">
+                <img id="viewImage" src="" class="w-full h-full object-cover transition-opacity duration-300">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                
+                <button id="imgToggleBtn" onclick="toggleViewImage()" class="hidden absolute bottom-16 right-4 bg-white/20 hover:bg-white/40 backdrop-blur text-white px-3 py-1 rounded-full text-xs font-bold transition-colors">
+                    <i class="fas fa-images mr-1"></i> 切替
+                </button>
+
+                <button onclick="closeViewModal()" class="absolute top-4 right-4 text-white/90 bg-black/20 hover:bg-black/40 backdrop-blur rounded-full w-8 h-8 flex items-center justify-center"><i class="fas fa-times"></i></button>
+                <div class="absolute bottom-4 left-6 text-white max-w-[80%]">
+                    <span class="text-xs font-medium bg-white/20 px-2 py-1 rounded backdrop-blur">BOX <span id="viewBoxIdBadge"></span></span>
+                    <h2 class="text-2xl font-bold mt-1 leading-tight truncate" id="viewBoxTitle"></h2>
+                </div>
+            </div>
+            <div class="p-6">
+                <div class="mb-6">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase mb-2">中身のメモ</h3>
+                    <p id="viewMemo" class="text-slate-800 text-base leading-relaxed font-medium bg-slate-50 p-3 rounded-xl border border-slate-100"></p>
+                </div>
+                
+                <div class="bg-slate-50 rounded-xl p-4 flex items-center gap-4 mb-6 border border-slate-100">
+                    <div id="qrcode" class="bg-white p-1 rounded shadow-sm"></div>
+                    <div class="flex-1">
+                        <p class="text-xs text-slate-500 font-bold mb-2">識別用QRコード</p>
+                        <button onclick="downloadQR()" class="text-xs bg-white border border-slate-300 px-3 py-1.5 rounded-lg text-slate-600 font-bold hover:bg-slate-50 shadow-sm flex items-center gap-2">
+                            <i class="fas fa-download"></i> 画像を保存
+                        </button>
+                    </div>
+                </div>
+
+                <button onclick="deleteBox()" class="w-full py-3 border border-red-100 text-red-500 rounded-xl text-sm font-bold hover:bg-red-50">削除する</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-analytics.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
+        import { getFirestore, collection, doc, addDoc, deleteDoc, orderBy, query, onSnapshot } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-storage.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA9xhYuxB0H6qgRo3RsptCHWH-U50ADOzk",
+            authDomain: "boxnote-e6176.firebaseapp.com",
+            projectId: "boxnote-e6176",
+            storageBucket: "boxnote-e6176.firebasestorage.app",
+            messagingSenderId: "136791768066",
+            appId: "1:136791768066:web:3b8a3311bf9a1c72787b1b",
+            measurementId: "G-84FN1RD57T"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        // State
+        let boxes = [];
+        let userId = null;
+        let selectedFiles = { 1: null, 2: null };
+        let currentViewImages = [];
+        let currentViewImageIndex = 0;
+        let currentBox = null;
+
+        // --- Functions ---
+        // Attached to window because type="module" creates a local scope
+
+        window.loginAndStart = function() {
+            signInAnonymously(auth).catch(e => alert("エラー: " + e.message));
+        };
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                userId = user.uid;
+                document.getElementById('introSection').classList.add('hidden');
+                document.getElementById('listBoxSection').classList.remove('hidden');
+                document.getElementById('headerActions').classList.remove('hidden');
+                document.getElementById('searchContainer').classList.remove('hidden');
+                document.getElementById('fab').classList.remove('hidden');
+                
+                // Firestore Listen
+                const q = query(collection(db, "users", userId, "boxes"), orderBy("id", "desc"));
+                onSnapshot(q, (snapshot) => {
+                    boxes = snapshot.docs.map(d => ({ docId: d.id, ...d.data() }));
+                    renderBoxes();
+                });
+            }
+        });
+
+        window.handleFileSelect = function(input, num) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                if (file.size > 5 * 1024 * 1024) {
+                    alert("ファイルサイズは5MB以下にしてください");
+                    input.value = "";
+                    return;
+                }
+                selectedFiles[num] = file;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.getElementById(`preview${num}`);
+                    img.src = e.target.result;
+                    img.classList.remove('hidden');
+                    document.getElementById(`placeholder${num}`).classList.add('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        };
+
+        window.saveBox = async function() {
+            const btn = document.getElementById('saveBtn');
+            btn.disabled = true;
+            btn.innerText = "送信中...";
+
+            try {
+                const id = parseInt(document.getElementById('boxNumber').innerText);
+                const name = document.getElementById('boxName').value.trim();
+                const memo = document.getElementById('boxMemo').value;
+                let imageUrls = [];
+
+                for(let i=1; i<=2; i++){
+                    const file = selectedFiles[i];
+                    if(file) {
+                        const path = `users/${userId}/${Date.now()}_${i}_${file.name}`;
+                        const storageRef = ref(storage, path);
+                        await uploadBytes(storageRef, file);
+                        const url = await getDownloadURL(storageRef);
+                        imageUrls.push(url);
+                    }
+                }
+
+                await addDoc(collection(db, "users", userId, "boxes"), {
+                    id, name, memo, imageUrls,
+                    createdAt: new Date().toISOString()
+                });
+
+                closeModal();
+            } catch(e) {
+                alert("エラー: " + e.message);
+                console.error(e);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "登録する";
+            }
+        };
+
+        function renderBoxes(filterText = '') {
+            const container = document.getElementById('listBoxSection');
+            container.innerHTML = '';
+            
+            const filtered = boxes.filter(box => 
+                (box.memo || '').toLowerCase().includes(filterText.toLowerCase()) || 
+                (box.name || '').toLowerCase().includes(filterText.toLowerCase()) ||
+                box.id.toString().includes(filterText)
+            );
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="text-center py-10 text-slate-400">見つかりませんでした</div>`;
+                return;
+            }
+
+            filtered.forEach(box => {
+                const card = document.createElement('div');
+                card.className = 'box-card bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-center gap-4 cursor-pointer';
+                card.onclick = () => window.openViewModal(box.id);
+
+                const thumb = (box.imageUrls && box.imageUrls.length > 0) ? box.imageUrls[0] : null;
+                const imgHtml = thumb 
+                    ? `<img src="${thumb}" class="w-16 h-16 rounded-xl object-cover bg-slate-100 shrink-0">` 
+                    : `<div class="w-16 h-16 rounded-xl bg-slate-100 flex items-center justify-center text-slate-300 shrink-0"><i class="fas fa-image"></i></div>`;
+                
+                const multiIcon = (box.imageUrls && box.imageUrls.length > 1) 
+                    ? `<i class="fas fa-clone text-[10px] text-slate-400 ml-1"></i>` : '';
+
+                const displayTitle = box.name ? box.name : `Box ${box.id}`;
+                
+                card.innerHTML = `
+                    ${imgHtml}
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="bg-primaryLight text-primary text-[10px] font-bold px-2 py-0.5 rounded">BOX ${box.id}</span>
+                            <span class="text-[10px] text-slate-400">${new Date(box.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        <h3 class="text-slate-900 font-bold text-sm truncate mb-0.5 flex items-center">${displayTitle} ${multiIcon}</h3>
+                        <p class="text-slate-500 text-xs truncate">${box.memo || 'メモなし'}</p>
+                    </div>
+                    <i class="fas fa-chevron-right text-slate-300 text-sm"></i>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // --- Window Exposed UI Functions ---
+
+        window.openModal = function() {
+            const nextId = boxes.length > 0 ? Math.max(...boxes.map(b => b.id)) + 1 : 1;
+            document.getElementById('boxNumber').innerText = nextId;
+            document.getElementById('boxName').value = '';
+            document.getElementById('boxMemo').value = '';
+            
+            document.getElementById('fileInput1').value = '';
+            document.getElementById('fileInput2').value = '';
+            selectedFiles = { 1: null, 2: null };
+            for(let i=1; i<=2; i++){
+                document.getElementById(`preview${i}`).src = '';
+                document.getElementById(`preview${i}`).classList.add('hidden');
+                document.getElementById(`placeholder${i}`).classList.remove('hidden');
+            }
+
+            document.getElementById('modal').classList.remove('hidden');
+        };
+
+        window.closeModal = function() { document.getElementById('modal').classList.add('hidden'); };
+
+        window.openViewModal = function(id) {
+            const box = boxes.find(b => b.id === id);
+            currentBox = box;
+            window.currentViewId = id; 
+            
+            document.getElementById('viewBoxIdBadge').innerText = box.id;
+            document.getElementById('viewBoxTitle').innerText = box.name ? box.name : `Box ${box.id}`;
+            document.getElementById('viewMemo').innerText = box.memo || 'メモはありません';
+            
+            currentViewImages = box.imageUrls || [];
+            currentViewImageIndex = 0;
+            const imgEl = document.getElementById('viewImage');
+            const toggleBtn = document.getElementById('imgToggleBtn');
+
+            if(currentViewImages.length > 0) {
+                imgEl.src = currentViewImages[0];
+                if(currentViewImages.length > 1) toggleBtn.classList.remove('hidden');
+                else toggleBtn.classList.add('hidden');
+            } else {
+                imgEl.src = 'https://via.placeholder.com/400x300?text=No+Photo';
+                toggleBtn.classList.add('hidden');
+            }
+
+            const qrContainer = document.getElementById('qrcode');
+            qrContainer.innerHTML = '';
+            new QRCode(qrContainer, { text: `BoxNote:${box.id}`, width: 70, height: 70 });
+            
+            document.getElementById('viewModal').classList.remove('hidden');
+        };
+
+        window.toggleViewImage = function() {
+            if(currentViewImages.length <= 1) return;
+            currentViewImageIndex = (currentViewImageIndex + 1) % currentViewImages.length;
+            document.getElementById('viewImage').src = currentViewImages[currentViewImageIndex];
+        };
+
+        window.closeViewModal = function() { document.getElementById('viewModal').classList.add('hidden'); };
+
+        window.deleteBox = function() {
+            if(confirm('削除しますか？')) {
+                deleteDoc(doc(db, "users", userId, "boxes", currentBox.docId));
+                window.closeViewModal();
+            }
+        };
+
+        window.filterBoxes = function() { renderBoxes(document.getElementById('searchInput').value); };
+        
+        window.startVoiceRecognition = function() {
+            const status = document.getElementById('voiceStatus');
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                alert('音声入力非対応ブラウザです'); return;
+            }
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'ja-JP';
+            recognition.onstart = () => { status.innerText = '聞いています...'; };
+            recognition.onresult = (e) => {
+                const text = e.results[0][0].transcript;
+                const area = document.getElementById('boxMemo');
+                area.value = area.value ? area.value + ' ' + text : text;
+                status.innerText = '';
+            };
+            recognition.start();
+        };
+
+        window.downloadQR = function() {
+            const qrContainer = document.getElementById('qrcode');
+            const img = qrContainer.querySelector('img');
+            let url = '';
+            if (img && img.src) url = img.src;
+            else {
+                const canvas = qrContainer.querySelector('canvas');
+                if (canvas) url = canvas.toDataURL("image/png");
+            }
+            if (url) {
+                const link = document.createElement('a');
+                const box = boxes.find(b => b.id === window.currentViewId);
+                const safeName = box.name ? box.name.replace(/[^a-z0-9]/gi, '_').substring(0,10) : `Box${box.id}`;
+                link.download = `BoxNote_${safeName}_QR.png`;
+                link.href = url;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        };
+
+        // Initial render logic is handled by onSnapshot
+    </script>
+</body>
+</html>

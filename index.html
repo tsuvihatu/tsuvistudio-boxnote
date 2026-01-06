@@ -49,7 +49,7 @@
 
     <header class="glass-header fixed top-0 w-full z-40 transition-all duration-300">
         <div class="max-w-lg mx-auto px-5 py-4 flex justify-between items-center">
-            <h1 class="text-xl font-black tracking-tight text-slate-900 flex items-center gap-2">
+            <h1 onclick="location.reload()" class="text-xl font-black tracking-tight text-slate-900 flex items-center gap-2 cursor-pointer">
                 <i class="fas fa-cube text-primary"></i> BoxNote
             </h1>
             <div id="headerActions" class="hidden">
@@ -69,7 +69,7 @@
         </div>
     </header>
 
-    <div class="h-20"></div>
+    <div id="headerSpacer" class="h-20 transition-all duration-300"></div>
 
     <main class="max-w-lg mx-auto px-5">
         
@@ -101,6 +101,12 @@
             <button onclick="loginAndStart()" class="w-full py-4 bg-primary text-white rounded-2xl font-bold text-lg shadow-xl shadow-indigo-200 hover:bg-indigo-700 transition-all transform hover:-translate-y-1">
                 はじめる
             </button>
+            
+            <div class="mt-6 flex justify-center">
+                <button onclick="loginAndStart()" class="text-slate-500 font-bold text-sm hover:text-primary transition-colors flex items-center gap-2">
+                    <i class="fab fa-google"></i> Googleアカウントでログイン
+                </button>
+            </div>
         </div>
 
         <div id="listBoxSection" class="hidden space-y-4 pt-2"></div>
@@ -202,7 +208,6 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-analytics.js";
-        // GoogleAuthProvider と signInWithPopup を追加、signInAnonymously を削除
         import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
         import { getFirestore, collection, doc, addDoc, deleteDoc, orderBy, query, onSnapshot } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-storage.js";
@@ -232,10 +237,8 @@
         let currentBox = null;
 
         // --- Functions ---
-        // Attached to window because type="module" creates a local scope
-
+        
         window.loginAndStart = function() {
-            // 匿名認証からGoogle認証に変更
             const provider = new GoogleAuthProvider();
             signInWithPopup(auth, provider).catch(e => alert("エラー: " + e.message));
         };
@@ -249,6 +252,9 @@
                 document.getElementById('searchContainer').classList.remove('hidden');
                 document.getElementById('fab').classList.remove('hidden');
                 
+                // 修正: 検索バーが表示される分、ヘッダー下のスペーサーを広げる
+                document.getElementById('headerSpacer').classList.replace('h-20', 'h-36');
+
                 // Firestore Listen
                 const q = query(collection(db, "users", userId, "boxes"), orderBy("id", "desc"));
                 onSnapshot(q, (snapshot) => {
@@ -468,8 +474,6 @@
                 document.body.removeChild(link);
             }
         };
-
-        // Initial render logic is handled by onSnapshot
     </script>
 </body>
 </html>

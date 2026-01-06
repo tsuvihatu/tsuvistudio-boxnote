@@ -102,10 +102,81 @@
                 はじめる
             </button>
             
-            <div class="mt-6 flex justify-center">
+<div class="mt-6 flex justify-center">
                 <button onclick="loginAndStart()" class="text-slate-500 font-bold text-sm hover:text-primary transition-colors flex items-center gap-2">
                     <i class="fab fa-google"></i> Googleアカウントでログイン
                 </button>
+            </div>
+
+            <div class="mt-16 border-t border-slate-100 pt-10 text-left">
+                <h3 class="text-center font-bold text-slate-900 text-lg mb-8">
+                    <span class="bg-indigo-50 text-primary px-3 py-1 rounded-full text-xs align-middle mr-2 tracking-wider">STEP</span>
+                    使い方はとても簡単
+                </h3>
+
+                <div class="space-y-6">
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex gap-4 items-start relative overflow-hidden">
+                        <div class="absolute -right-4 -top-4 text-9xl font-black text-slate-50 opacity-50 pointer-events-none select-none">1</div>
+                        <div class="w-12 h-12 shrink-0 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center text-xl shadow-sm z-10">
+                            <i class="fas fa-plus"></i>
+                        </div>
+                        <div class="relative z-10">
+                            <h4 class="font-bold text-slate-800 mb-1">箱を登録する</h4>
+                            <p class="text-xs text-slate-500 leading-relaxed">
+                                「追加」ボタンを押すと、自動で箱番号（BOX 1, BOX 2...）が発行されます。
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex gap-4 items-start relative overflow-hidden">
+                        <div class="absolute -right-4 -top-4 text-9xl font-black text-slate-50 opacity-50 pointer-events-none select-none">2</div>
+                        <div class="w-12 h-12 shrink-0 bg-indigo-50 text-primary rounded-full flex items-center justify-center text-xl shadow-sm z-10">
+                            <i class="fas fa-camera"></i>
+                        </div>
+                        <div class="relative z-10">
+                            <h4 class="font-bold text-slate-800 mb-1">写真を撮ってメモ</h4>
+                            <p class="text-xs text-slate-500 leading-relaxed">
+                                中身の写真をパシャリ。「冬服」「漫画」などのメモや、音声入力も可能です。
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex gap-4 items-start relative overflow-hidden">
+                        <div class="absolute -right-4 -top-4 text-9xl font-black text-slate-50 opacity-50 pointer-events-none select-none">3</div>
+                        <div class="w-12 h-12 shrink-0 bg-purple-50 text-purple-500 rounded-full flex items-center justify-center text-xl shadow-sm z-10">
+                            <i class="fas fa-qrcode"></i>
+                        </div>
+                        <div class="relative z-10">
+                            <h4 class="font-bold text-slate-800 mb-1">QRコードを貼る</h4>
+                            <p class="text-xs text-slate-500 leading-relaxed">
+                                生成されたQRコードを段ボールに貼れば、スマホをかざすだけで中身がわかります。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-12 mb-6">
+                    <h3 class="text-center font-bold text-slate-900 text-lg mb-6">こんなシーンで活躍</h3>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-slate-50 p-4 rounded-xl text-center">
+                            <i class="fas fa-truck text-slate-400 text-2xl mb-2"></i>
+                            <p class="text-xs font-bold text-slate-600">引越しの荷造り</p>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-xl text-center">
+                            <i class="fas fa-tshirt text-slate-400 text-2xl mb-2"></i>
+                            <p class="text-xs font-bold text-slate-600">衣替え・収納</p>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-xl text-center">
+                            <i class="fas fa-book text-slate-400 text-2xl mb-2"></i>
+                            <p class="text-xs font-bold text-slate-600">蔵書の管理</p>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-xl text-center">
+                            <i class="fas fa-box-open text-slate-400 text-2xl mb-2"></i>
+                            <p class="text-xs font-bold text-slate-600">備品の整理</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
             </div>
         </div>
 

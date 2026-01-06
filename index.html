@@ -36,7 +36,6 @@
     </style>
 </head>
 
-<!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-84FN1RD57T"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
@@ -203,7 +202,8 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-analytics.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
+        // GoogleAuthProvider と signInWithPopup を追加、signInAnonymously を削除
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
         import { getFirestore, collection, doc, addDoc, deleteDoc, orderBy, query, onSnapshot } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-storage.js";
 
@@ -235,7 +235,9 @@
         // Attached to window because type="module" creates a local scope
 
         window.loginAndStart = function() {
-            signInAnonymously(auth).catch(e => alert("エラー: " + e.message));
+            // 匿名認証からGoogle認証に変更
+            const provider = new GoogleAuthProvider();
+            signInWithPopup(auth, provider).catch(e => alert("エラー: " + e.message));
         };
 
         onAuthStateChanged(auth, (user) => {

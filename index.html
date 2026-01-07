@@ -328,15 +328,14 @@ const firebaseConfig = {
         const db = getFirestore(app);
         const storage = getStorage(app);
 
-        // State
         let boxes = [];
         let userId = null;
         let selectedFiles = { 1: null, 2: null };
         let currentViewImages = [];
         let currentViewImageIndex = 0;
         let currentBox = null;
+        let isFirstLoad = true; 
 
-        // --- Functions ---
         
         window.loginAndStart = function() {
             const provider = new GoogleAuthProvider();
@@ -352,14 +351,26 @@ const firebaseConfig = {
                 document.getElementById('searchContainer').classList.remove('hidden');
                 document.getElementById('fab').classList.remove('hidden');
                 
-                // 修正: 検索バーが表示される分、ヘッダー下のスペーサーを広げる
                 document.getElementById('headerSpacer').classList.replace('h-20', 'h-36');
 
-                // Firestore Listen
                 const q = query(collection(db, "users", userId, "boxes"), orderBy("id", "desc"));
                 onSnapshot(q, (snapshot) => {
                     boxes = snapshot.docs.map(d => ({ docId: d.id, ...d.data() }));
                     renderBoxes();
+
+                    if (isFirstLoad) {
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const targetId = parseInt(urlParams.get('boxId'));
+                        
+                        if (targetId) {
+                            const targetBox = boxes.find(b => b.id === targetId);
+                            if (targetBox) {
+                                window.openViewModal(targetId);
+                                window.history.replaceState(null, '', window.location.pathname);
+                            }
+                        }
+                        isFirstLoad = false;
+                    }
                 });
             }
         });
@@ -379,7 +390,6 @@ const firebaseConfig = {
                     img.src = e.target.result;
                     img.classList.remove('hidden');
                     document.getElementById(`placeholder${num}`).classList.add('hidden');
-                    // 追加: 削除ボタンを表示
                     document.getElementById(`deleteBtn${num}`).classList.remove('hidden');
                 }
                 reader.readAsDataURL(file);
@@ -469,10 +479,8 @@ const firebaseConfig = {
             });
         }
 
-        // --- Window Exposed UI Functions ---
 
         window.openModal = function() {
-            // 追加: 箱の数制限
             if (boxes.length >= 10) {
                 alert("登録できる箱は10個までです。");
                 return;
@@ -490,7 +498,6 @@ const firebaseConfig = {
                 document.getElementById(`preview${i}`).src = '';
                 document.getElementById(`preview${i}`).classList.add('hidden');
                 document.getElementById(`placeholder${i}`).classList.remove('hidden');
-                // 追加: 削除ボタンを隠す
                 document.getElementById(`deleteBtn${i}`).classList.add('hidden');
             }
 
@@ -524,7 +531,8 @@ const firebaseConfig = {
 
             const qrContainer = document.getElementById('qrcode');
             qrContainer.innerHTML = '';
-            new QRCode(qrContainer, { text: `BoxNote:${box.id}`, width: 70, height: 70 });
+            const appUrl = window.location.href.split('?')[0] + '?boxId=' + box.id;
+            new QRCode(qrContainer, { text: appUrl, width: 70, height: 70 });
             
             document.getElementById('viewModal').classList.remove('hidden');
         };
@@ -585,9 +593,8 @@ const firebaseConfig = {
             }
         };
 
-        // 追加: 画像削除機能
         window.removeImage = function(event, num) {
-            event.stopPropagation(); // 親要素のクリックイベントを止める
+            event.stopPropagation(); 
             document.getElementById(`fileInput${num}`).value = '';
             selectedFiles[num] = null;
             document.getElementById(`preview${num}`).src = '';
